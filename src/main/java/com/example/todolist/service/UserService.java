@@ -1,31 +1,30 @@
 package com.example.todolist.service;
 
+import com.example.todolist.config.JwtService;
 import com.example.todolist.entity.User;
 import com.example.todolist.repository.UserRepo;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 
 @Service
 public class UserService {
-    @Autowired
-    private UserRepo userRepository;
 
-    //@Autowired
-//    private PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
 
-    public User register(User user) {
-        //user.setPassword(passwordEncoder.encode(user.getPassword()));
-        String pass = user.getPassword();
-        user.setPassword(pass);
-        return userRepository.save(user);
+    private final UserRepo userRepo;
+
+    public UserService(JwtService jwtService, UserRepo userRepo) {
+        this.jwtService = jwtService;
+        this.userRepo = userRepo;
     }
 
-    public Optional<User> findByEmail(String email) {
-        return userRepository.findByEmail(email);
+    public String getUsernameFromToken(String token){
+        token = token.split(" ")[1];
+        return jwtService.extractUsername(token);
+    }
+
+    public Optional<User> getUserByUsername(String username){
+        return userRepo.findByUsername(username);
     }
 }
-

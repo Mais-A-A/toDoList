@@ -1,37 +1,42 @@
 package com.example.todolist.controller;
 
-
-import com.example.todolist.entity.User;
-import com.example.todolist.service.UserService;
+import com.example.todolist.dtos.UserCreateDTO;
+import com.example.todolist.dtos.UserLoginDTO;
+import com.example.todolist.service.AuthService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Optional;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
 
-    private final UserService userService;
+    private final AuthService authService;
 
-    public UserController(UserService userService) {
-        this.userService = userService;
+    private final PasswordEncoder passwordEncoder;
+
+    public UserController(AuthService authService, PasswordEncoder passwordEncoder) {
+        this.authService = authService;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @PostMapping("/register")
-    public ResponseEntity<String> register(@RequestParam String email, @RequestParam String password, @RequestParam String name) {
-        System.out.println("hi from register");
+    public ResponseEntity<?> registerUser(@RequestBody UserCreateDTO user){
+        System.out.println(user.getUsername()+" "+user.getPassword());
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        String responseMessage = authService.createUser(user);
+        return ResponseEntity.ok(responseMessage);
+    }
 
-        Optional<User> existingUser = userService.findByEmail(email);
-        if (existingUser.isPresent()) {
-            return ResponseEntity.badRequest().body("Email already in use.");
-        }
-        User user = new User(email, password, name);
-        //userService.register(email, password, name);
-        userService.register(user);
-        return ResponseEntity.ok("User registered successfully.");
+    @PostMapping("/login")
+    public ResponseEntity<?> loginUser( @RequestBody UserLoginDTO user){
+        System.out.println(user.getUserName()+" "+user.getPassword());
+        Map<?, ?> response = authService.loginByUserName(user);
+        return ResponseEntity.ok(response);
     }
 }
